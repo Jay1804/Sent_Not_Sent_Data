@@ -1,0 +1,113 @@
+"""Client -> Cluster lookup (the 'Notes' sheet). Unlisted clients default to BGV,
+matching =IFERROR(VLOOKUP(client, Notes!B:C, 2, 0), "BGV")."""
+
+DEFAULT_CLUSTER = "BGV"
+
+_ROWS = [
+    ("Accenture Solutions Private Limited", "Accenture"),
+    ("Accenture Additional", "Accenture Vendor"),
+    ("Accenture Lanka", "Accenture Vendor"),
+    ("Accenture Consulting Vendors", "Accenture Vendor"),
+    ("Cognizant Technology Solutions India Private Limited(CTS)", "CTS"),
+    ("CTS Consulting Vendors", "CTS"),
+    ("HCL Technologies Ltd", "HCL"),
+    ("TeamLease Digital (HCL)", "HCL"),
+    ("HCL Corporation Group", "HCL"),
+    ("HCL Avitas Private Limited", "HCL"),
+    ("Aforeserve", "HCL"),
+    ("SightSpectrum Technology Solutions Private Limited", "HCL"),
+    ("SmartBrains Engineers & Technologist Pvt Ltd", "HCL"),
+    ("Cerebra IT Services Private Limited", "HCL"),
+    ("HCL Technologies", "HCL"),
+    ("Wipro Limited", "Wipro"),
+    ("Experis IT Private Limited", "HCL"),
+    ("Collabera Technologies Private Limited (Vendor of HCL)", "HCL"),
+    ("ESTUATE SOFTWARE PRIVATE LIMITED", "HCL"),
+    ("Altisec Technologies Pvt. Ltd", "HCL"),
+    ("Pricewaterhouse Cooper Pvt Ltd- Service Delivery", "Generic BGV"),
+    ("Candor Gurgaon One Realty Projects Pvt Ltd", "-"),
+    ("DHL EXPRESS (INDIA) PVT. LTD", "-"),
+    ("PV Excel India Pvt. Ltd.", "-"),
+    ("Futuresoft Solutions Pvt. Ltd", "-"),
+    ("HERO MOTOCORP LTD.", "BGV"),
+    ("One97 Communications Limited", "Generic BGV"),
+    ("Randstad India Pvt  Ltd.", "HCL"),
+    ("Wipro Ltd", "Wipro"),
+    ("HCL Vendors", "HCL"),
+    ("Accenture Solutions Private Limited New", "Accenture"),
+    ("Alois Technologies LLP", "-"),
+    ("Ascendum Solutions Pvt. Ltd.", "-"),
+    ("AuthLead", "-"),
+    ("AutoSuiCli", "-"),
+    ("CalibeHR Business Support Services Private Limited", "-"),
+    ("Dalhyd Technology Pvt. Ltd", "-"),
+    ("DHL EXPRESS (INDIA) PVT. LTD/Mumbai", "-"),
+    ("Embassy of Georgia in India", "-"),
+    ("Embassy of Greece,New Delhi", "-"),
+    ("Embassy of the Republic of Korea, New Delhi", "-"),
+    ("HCL TECHNOLOGIES LIMITED", "HCL"),
+    ("Hitachi Payment Services Private Limited", "-"),
+    ("Incise Infotech Private Limited", "-"),
+    ("Jindal Steel and Power limited", "-"),
+    ("Macmillan Publishers India Pvt Ltd", "-"),
+    ("NF Float", "-"),
+    ("Pacific IT Consulting Pvt Ltd", "-"),
+    ("Pipeline Infrastructure Limited (VDD Client OnboardX)", "-"),
+    ("Productiva IT Solutions Pvt. LTD", "-"),
+    ("PureSoftware Pvt. Ltd", "-"),
+    ("Randstad India Pvt Ltd.", "HCL"),
+    ("Reliance industrial", "-"),
+    ("Rsk IT Solutions PVt Ltd", "-"),
+    ("Sankalp Semiconductor Private Limited", "-"),
+    ("Space TeleInfra Private Limited", "-"),
+    ("Space TeleInfra Pvt. Ltd", "-"),
+    ("STAFFING CONSULTANTS - BULLZ", "-"),
+    ("TCS Standard", "-"),
+    ("Thomson Reuters", "-"),
+    ("Triad Square Infosec Pvt Ltd", "-"),
+    ("US Technology", "-"),
+    ("VFS - ITALIAN EMBASSY, BANGLADESH", "-"),
+    ("VIBING TECHCLOUD SOLUTIONS PRIVATE LIMITED", "-"),
+    ("TestAutomationClient(To be Ignored)", "-"),
+    ("KRG Technologies India Pvt Ltd", "-"),
+    ("Quantumics.AI India Technology Private Limited", "BGV"),
+    ("Alois Technologies Private Limited.", "-"),
+    ("Fullstackxperts Technology Pvt Ltd", "-"),
+    ("Alchemy Techsol", "-"),
+    ("Vyom Labs", "-"),
+    ("Test React", "-"),
+    ("Embassy of Austria, Sri Lanka", "-"),
+    ("Embassy of South Africa", "-"),
+    ("QVP-Kingdom of Saudi Arabia", "-"),
+    ("AuthBridge INC", "-"),
+    ("Bosch Global  Software Technologies Private Limited (BGSW)", "Generic BGV"),
+    ("Cargill Group", "Generic BGV"),
+    ("Johnson & Johnson Private Limited", "Generic BGV"),
+    ("Bosch Limited", "Generic BGV"),
+    ("Infosys BPM Manila", "Infy"),
+    ("Infosys BPO", "Infy"),
+    ("AuthBridge Research Services Pvt Ltd", "-"),
+    ("Due Diligence", "-"),
+    ("Embassy of Austria, Nigeria", "-"),
+    ("Embassy of Austria,New Delhi", "-"),
+    ("Embassy of Finland, Nigeria", "-"),
+    ("Test", "-"),
+    ("Check and Verify Global", "-"),
+    ("VFS_Embassy of Italy, India", "-"),
+    ("INFOSYS LIMITED", "Infy"),
+]
+
+
+def _key(name) -> str:
+    # VLOOKUP is case-insensitive; also ignore stray double spaces / padding
+    return " ".join(str(name).split()).casefold()
+
+
+CLUSTER_BY_CLIENT = {}
+for _client, _cluster in _ROWS:
+    CLUSTER_BY_CLIENT.setdefault(_key(_client), _cluster)  # first match wins, like VLOOKUP
+
+
+def cluster_for(series):
+    keys = series.map(lambda v: None if v is None or v != v else _key(v))
+    return keys.map(CLUSTER_BY_CLIENT).fillna(DEFAULT_CLUSTER)
